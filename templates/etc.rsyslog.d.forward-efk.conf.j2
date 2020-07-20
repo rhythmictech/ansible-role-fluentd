@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+
+$ActionResumeInterval 10
+$ActionQueueSize 100000
+$ActionQueueDiscardMark 97500
+$ActionQueueHighWaterMark 80000
+$ActionQueueType LinkedList
+$ActionQueueFileName syslogspool
+$ActionQueueCheckpointInterval 100
+$ActionQueueMaxDiskSpace 1g
+$ActionResumeRetryCount -1
+$ActionQueueSaveOnShutdown on
+$ActionQueueTimeoutEnqueue 10
+$ActionQueueDiscardSeverity 0
+$WorkDirectory /var/spool
+
+*.* @@127.0.0.1:1999

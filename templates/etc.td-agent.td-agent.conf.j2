@@ -1,0 +1,74 @@
+# {{ ansible_managed }}
+
+{% for source in fluentd_sources %}
+# Source: {{ source.name }}
+<source>
+{% for param in source.keys() %}
+{% if param != "name" %}
+  {{ param }} {{ source[param] }}
+{% endif %}
+{% endfor %}
+</source>
+{% endfor %}
+
+{% if fluentd_add_hostname_filter|default(False) %}
+<filter **>
+  @type record_transformer
+  <record>
+    host "#{Socket.gethostname}"
+  </record>
+</filter>
+{% endif %}
+
+{% for filter in fluentd_filters %}
+# Filter: {{ filter.name }}
+<filter {{ filter.tags }}>
+  @type {{ filter.type }}
+  <record>
+{% for record in filter.records.keys() %}
+     {{ record }} {{ filter.records[record] }}
+{% endfor %}
+  </record>
+</filter>
+{% endfor %}
+
+{% for match in fluentd_matches %}
+<match {{ match.match }}>
+
+{% if match.type is defined %}
+  @type {{ match.type }}
+{% endif %}
+{% if match.type == "elasticsearch" %}
+{% for host in logcap_es_members %}
+{% if loop.first %}  hosts {% endif %}{{ host }}:9200{% if not loop.last %},{% endif %}
+{% endfor %}
+
+  logstash_format true
+  logstash_prefix {{ match.tag }}
+  include_tag_key true
+  request_timeout {{ match.es_request_timeout|default(fluentd_es_request_timeout) }}
+
+{% elif match.type == "forward" %}
+  <server>
+    name {{ match.destination }}
+    host {{ match.destination }}
+    port {{ match.port|default(24225) }}
+  </server>
+{% else %}
+{%- for key, value in match.items() -%}
+{% if key not in ['match','type','flush_interval','buffer_type','buffer_type','buffer_path','buffer_chunk_limit','buffer_queue_limit'] %}
+  {{ key }} {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+  flush_interval {{ match.buffer_flush_interval|default(fluentd_buffer_flush_interval_default) }}
+  buffer_type {{ match.buffer_type|default(fluentd_buffer_type_default) }}
+  buffer_path {{ match.buffer_path|default(fluentd_buffer_path_default) }}
+
+  buffer_chunk_limit {{ match.buffer_chunk_limit|default(fluentd_buffer_chunk_limit_default) }}
+  buffer_queue_limit {{ match.buffer_queue_limit|default(fluentd_buffer_queue_limit_default) }}
+
+  disable_retry_limit true
+</match>
+{% endfor %}

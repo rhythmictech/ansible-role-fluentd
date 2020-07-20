@@ -1,0 +1,46 @@
+---
+
+# Set the sources. You can set a syslog type for generic syslog capture and a forward type
+# for typical fluentd communication. Other types are possible but should not be needed.
+fluentd_sources:
+  - name: syslog
+    port: 1999
+    type: syslog
+    tag: "{{ env }}.syslog"
+    protocol_type: tcp
+  - name: fluentd-forward
+    port: 24224
+    type: forward
+
+
+# define the matches that fluentd will be configured with
+# At the moment, these are only elasticsearch targets to the designated es cluster.
+# Order matters.
+fluentd_matches:
+  - tag: default
+    match: "**"
+
+fluentd_filters: []
+
+# Default buffer settings, which can be overridden in the match dicts
+fluentd_buffer_flush_interval_default: 30s
+fluentd_buffer_type_default: file
+fluentd_buffer_path_default: /opt/fluentd/buffer/
+fluentd_buffer_chunk_limit_default: 8m
+fluentd_buffer_queue_limit_default: 500
+fluentd_retry_wait_default: 15s
+fluentd_max_retry_wait_default: 5m
+
+fluentd_buffer_retry_wait_default: 15s
+
+fluentd_es_request_timeout: 5s
+
+fluentd_packages:
+  - td-agent
+  - curl-devel
+
+fluentd_plugins:
+  - fluent-plugin-secure-forward
+  - fluent-plugin-mysqlslowquery
+
+fluentd_external_plugins: []

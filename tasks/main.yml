@@ -1,0 +1,75 @@
+---
+
+- name: ensure the td-agent group exists
+  group: name=td-agent state=present
+  tags: ['fluentd']
+
+- name: ensure the td-agent user exists
+  user: name=td-agent group=td-agent state=present
+  tags: ['fluentd']
+
+- name: create td-agent user home directory for CIS
+  file: path=/var/lib/td-agent state=directory owner=td-agent group=td-agent mode=0700
+  tags: ['fluentd']
+
+- name: ensure fluentd packages are installed
+  yum: name={{ fluentd_packages }} state=present
+  notify: restart fluentd
+  tags: ['fluentd']
+
+- name: place the /etc/td-agent/td-agent.conf file
+  template:
+    src: etc.td-agent.td-agent.conf.j2
+    dest: /etc/td-agent/td-agent.conf
+    owner: td-agent
+    group: "td-agent"
+    mode: 0640
+  notify: restart fluentd
+  tags: ['fluentd']
+
+- name: ensure the fluentd dirs are created
+  file: path={{ item }} state=directory recurse=no owner=td-agent group=td-agent mode=0750
+  with_items:
+    - /opt/fluentd
+    - /opt/td-agent
+  tags: ['fluentd']
+
+# Even specifying to use this executable, the ansible gem: module still
+# causes problems with some installations (particularly the elasticsearch plugin?)
+- name: ensure fluentd plugin gems are installed
+  command: "/usr/sbin/td-agent-gem install {{ item }}"
+  with_items: "{{ fluentd_plugins }}"
+  notify: restart fluentd
+  tags: ['fluentd']
+
+- name: install non-gem fluentd plugins
+  get_url:
+    url: "{{ item.location }}"
+    dest: "/etc/td-agent/plugin/{{ item.name }}"
+    owner: "td-agent"
+    group: "td-agent"
+  with_items: "{{ fluentd_external_plugins }}"
+  notify: restart fluentd
+  tags: ['fluentd']
+
+- name: ensure fluentd is running and enabled manually, in centos 7 ## (service module won't do it)
+  command: "systemctl {{ item }} td-agent.service"
+  with_items:
+    - enable
+    - start
+  when: "{{ ansible_distribution_major_version == '7' }}"
+  tags: ['fluentd']
+
+- name: place the rsyslog efk forward file
+  template:
+    src: etc.rsyslog.d.forward-efk.conf.j2
+    dest: /etc/rsyslog.d/forward-efk.conf
+    owner: root
+    group: root
+    mode: 0640
+  notify: restart rsyslog
+  tags: ['fluentd','rsyslog']
+
+- name: ensure fluentd is running and enabled
+  service: name=td-agent state=started enabled=true
+  tags: ['fluentd']
