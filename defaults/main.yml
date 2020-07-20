@@ -1,4 +1,7 @@
 ---
+# Set Repository information
+fluentd_repo_url: http://packages.treasuredata.com/2/redhat/\$releasever/\$basearch
+fluentd_gpg_url: https://packages.treasuredata.com/GPG-KEY-td-agent
 
 # Set the sources. You can set a syslog type for generic syslog capture and a forward type
 # for typical fluentd communication. Other types are possible but should not be needed.
