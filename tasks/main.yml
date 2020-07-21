@@ -1,17 +1,8 @@
 ---
-- name: get remote rpm gpg keys
-  get_url:
-    url: "{{ fluentd_gpg_key_url }}"
-    dest: "/etc/pki/rpm-gpg/RPM-GPG-KEY-td-agent"
-    owner: root
-    group: root
-    mode: 0640
-  tags: ['fluentd', 'repos', 'gpgkeys']
-
 - name: install rpm gpg keys
   rpm_key: 
     state: present 
-    key: "/etc/pki/rpm-gpg/RPM-GPG-KEY-td-agent"
+    key: "{{ fluentd_gpg_key_url }}"
   tags: ['fluentd', 'repos', 'gpgkeys']
 
 - name: install repos
@@ -19,7 +10,7 @@
     name: "td-agent-2"
     description: "td-agent-2"
     baseurl: "{{ fluentd_repo_url }}"
-    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-td-agent
+    gpgkey: "{{ fluentd_gpg_key_url }}"
     gpgcheck: yes
   tags: ['fluentd', 'repos', 'gpgkeys']
 
