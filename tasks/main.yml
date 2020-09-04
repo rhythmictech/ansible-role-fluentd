@@ -38,6 +38,18 @@
     owner: td-agent
     group: "td-agent"
     mode: 0640
+  when: not fluentd_manual_config
+  notify: restart fluentd
+  tags: ['fluentd']
+
+- name: place the /etc/td-agent/td-agent.conf file
+  template:
+    src: etc.td-agent.td-agent-manual.conf.j2
+    dest: /etc/td-agent/td-agent.conf
+    owner: td-agent
+    group: "td-agent"
+    mode: 0640
+  when: fluentd_manual_config
   notify: restart fluentd
   tags: ['fluentd']
 
