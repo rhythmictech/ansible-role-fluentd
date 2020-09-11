@@ -47,3 +47,6 @@ fluentd_plugins:
   - fluent-plugin-mysqlslowquery
 
 fluentd_external_plugins: []
+
+fluentd_manual_config: false
+fluentd_manual_config_contents: 
